@@ -18,5 +18,13 @@
     <ClCompile Include="Server.c">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="ps.c">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ps.h">
+      <Filter>Исходные файлы</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
