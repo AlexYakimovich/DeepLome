@@ -20,13 +20,13 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{0FE0E3BC-886F-49ED-9602-9439C86076F6}</ProjectGuid>
-    <RootNamespace>DeepLomeClient</RootNamespace>
+    <ProjectGuid>{FD91A91D-D6E7-4E9B-A975-421F0D128927}</ProjectGuid>
+    <RootNamespace>DeepLomeCore</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
@@ -76,11 +76,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\GODLIKE\source\repos\DeepLome\DeepLomeCore;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
-    <Link>
-      <AdditionalDependencies>C:\Users\GODLIKE\source\repos\DeepLome\Debug\DeepLomeCore.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -119,11 +115,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Client.c" />
-    <ClCompile Include="pc.c" />
+    <ClInclude Include="sm_connection.h" />
+    <ClInclude Include="sm_memory.h" />
+    <ClInclude Include="socket.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="pc.h" />
+    <ClCompile Include="sm_connection.c" />
+    <ClCompile Include="sm_memory.c" />
+    <ClCompile Include="socket.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

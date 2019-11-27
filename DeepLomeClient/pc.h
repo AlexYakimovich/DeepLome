@@ -1,7 +1,10 @@
+#include "socket.h"
+#include "sm_connection.h"
 
-typedef int Socket;
 typedef struct {
-  Socket ClientSocket;
+  SmConnection connection;
+  SmMemory input;
+  SmMemory output;
 } ProxyClientEntity;
 
 typedef ProxyClientEntity* ProxyClient;

@@ -1,59 +1,42 @@
 #include "pc.h"
-#include <winsock.h>
-#pragma comment(lib,"WS2_32")
-#pragma warning(disable:4996)
 
-static char initialized = FALSE;
-static void InitializeWSA()
+
+int ProxyClientInitialize(ProxyClient * p_client)
 {
-  if (initialized)
-    return;
-  initialized = TRUE;
-  int iResult;
-  WSADATA wsaData;
-  // Initialize Winsock
-  iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-  if (iResult != 0) {
-    printf("WSAStartup failed: %d\n", iResult);
-  }
-}
+  ProxyClient client = malloc(sizeof(ProxyClientEntity));
 
+  Socket ClientSocket = SocketCreate();
+  SocketConnect(ClientSocket, 1337, INADDR_LOOPBACK);
 
-int ProxyClientInitialize(ProxyClient * client)
-{
-  InitializeWSA();
-  const ProxyClientEntity inst = {
-    socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
-  };
-  struct sockaddr_in SockAddr;
-  SockAddr.sin_family = AF_INET;
-  SockAddr.sin_port = htons(1337);
-  SockAddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+  InitializeSmConnection(&client->connection, ClientSocket);
+  InitializeSmMemory(&client->input, 40, SM_MEMORY_WRITE_ONLY);
+  InitializeSmMemory(&client->output, 40, SM_MEMORY_READ_ONLY);
 
-  connect(inst.ClientSocket, (struct sockaddr *)&SockAddr, sizeof(SockAddr));
+  AttachSmMemoryToSmConnection(client->connection, client->input);
+  AttachSmMemoryToSmConnection(client->connection, client->output);
 
-  *client = malloc(sizeof(ProxyClientEntity));
-
-  memcpy(*client, &inst, sizeof(ProxyClientEntity));
+  *p_client = client;
   return 0;
 }
 
 int ProxyClientOnBegin(ProxyClient client)
 {
-  char msg[10];
-  recv(client->ClientSocket, msg, sizeof(msg), NULL);
-  printf("%s\n", msg);
+  SmConnectionGetData(client->connection);
+  printf("%s\n", client->output->Data);
   return 0;
 }
+static int iter = 0;
 
 int ProxyClientOnCommit(ProxyClient client)
 {
-  char msg[] = "OFF BEGIN";
-  return send(client->ClientSocket, msg, sizeof(msg), NULL) > 0;
+  char msg[] = "OFF BEGIN #0";
+  msg[11] = '0' + iter % 10;
+  iter++;
+  memcpy(client->input->Data, msg, sizeof(msg));
+  SmConnectionSetData(client->connection);
 }
 
 void ProxyClientFinalize(ProxyClient client)
 {
-  closesocket(client->ClientSocket);
   free(client);
 }
