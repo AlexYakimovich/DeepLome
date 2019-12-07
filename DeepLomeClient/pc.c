@@ -1,4 +1,5 @@
 #include "pc.h"
+#include <stdio.h>
 
 
 int ProxyClientInitialize(ProxyClient * p_client)
@@ -18,22 +19,27 @@ int ProxyClientInitialize(ProxyClient * p_client)
   *p_client = client;
   return 0;
 }
+static int iter = 0;
 
 int ProxyClientOnBegin(ProxyClient client)
 {
-  SmConnectionGetData(client->connection);
-  printf("%s\n", client->output->Data);
+
+  char msg[] = "OFF BEGIN #0";
+  msg[11] = '0' + iter % 10;
+  printf("SEND %s\n", msg);
+  iter++;
+  memcpy(client->input->Data, msg, client->input->Size);
+  if(SmConnectionSetData(client->connection) == -1)
+    printf("ERROR SET\n");
   return 0;
 }
-static int iter = 0;
+
 
 int ProxyClientOnCommit(ProxyClient client)
 {
-  char msg[] = "OFF BEGIN #0";
-  msg[11] = '0' + iter % 10;
-  iter++;
-  memcpy(client->input->Data, msg, sizeof(msg));
-  SmConnectionSetData(client->connection);
+  if(SmConnectionGetData(client->connection) == -1)
+    printf("ERROR GET\n");
+  printf("%s\n", client->output->Data);
 }
 
 void ProxyClientFinalize(ProxyClient client)

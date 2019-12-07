@@ -25,20 +25,20 @@ int ProxyServerInitialize(ProxyServer * p_server)
 
 int ProxyServerOnBegin(ProxyServer server)
 {
-  SmConnectionSetData(server->connection);
-  return 0;
+  return SmConnectionGetData(server->connection);
 }
 
 int ProxyServerOnCompute(ProxyServer server)
 {
-  sprintf(server->output->Data, "EDITED_%s", server->input->Data);
+  memcpy(server->output->Data, "EDITED", 7);
+  ((char *)server->output->Data)[6] = ' ';
+  memcpy((char *)server->output->Data + 7, server->input->Data, server->input->Size - 7);
   return 0;
 }
 
 int ProxyServerOnCommit(ProxyServer server)
 {
-  SmConnectionGetData(server->connection);
-  return 0;
+  return SmConnectionSetData(server->connection);
 }
 
 void ProxyServerFinalize(ProxyServer server)
