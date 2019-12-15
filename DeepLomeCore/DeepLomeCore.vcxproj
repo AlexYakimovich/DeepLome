@@ -115,6 +115,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="fb_adapter.h" />
+    <ClInclude Include="fb_hello_world.h" />
+    <ClInclude Include="fb_types.h" />
     <ClInclude Include="sm_connection.h" />
     <ClInclude Include="sm_memory.h" />
     <ClInclude Include="socket.h" />

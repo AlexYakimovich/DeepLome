@@ -123,6 +123,7 @@
     <ClCompile Include="pc.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="client_fb_hello_world.h" />
     <ClInclude Include="pc.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

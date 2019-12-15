@@ -1,5 +1,6 @@
 #include "socket.h"
 #include "sm_memory.h"
+#pragma once
 #define MAX_MEMORY_SIZE 100
 
 typedef struct {

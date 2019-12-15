@@ -1,4 +1,5 @@
-typedef enum smMemoryType
+#pragma once
+typedef enum
 {
   SM_MEMORY_READ_ONLY,
   SM_MEMORY_WRITE_ONLY,

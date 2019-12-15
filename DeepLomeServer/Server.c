@@ -1,18 +1,27 @@
-#include "ps.h"
 #include <stdio.h>
-
+#include "ps.h"
+#include "server_fb_hello_world.h"
 
 int main()
 {
+  printf("Waiting for a client...\n");
   ProxyServer server;
   ProxyServerInitialize(&server);
+  printf("Client connected\n");
+
+  FbAdapter adapters[] = {FbHelloWorldAdapterCreate()};
+  ProxyServerPrepare(server, adapters, sizeof(adapters) / sizeof(adapters[0]));
+
   while (1)
   {
-    ProxyServerOnBegin(server);
+    if(ProxyServerOnBegin(server) == -1)
+      return -1;
 
-    ProxyServerOnCompute(server);
+    if (ProxyServerOnCompute(server))
+      return -2;
 
-    ProxyServerOnCommit(server);
+    if (ProxyServerOnCommit(server))
+      return -3;
   }
 
   system("pause");

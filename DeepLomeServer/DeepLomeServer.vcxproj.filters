@@ -26,5 +26,8 @@
     <ClInclude Include="ps.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
+    <ClInclude Include="server_fb_hello_world.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
