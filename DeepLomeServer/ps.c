@@ -4,26 +4,60 @@
 #include <stdio.h>
 #pragma warning(disable : 4996)
 
+int ProxyServerWaitForSubscribers(ProxyServer server)
+{
+  while (server->connectionCount < 1)
+    OsalSleep(100);
+  return 0;
+}
+
+static void AcceptFunc(ProxyServer server) {
+
+  Socket MasterSocket = SocketCreate();
+  SocketBind(MasterSocket, 1337, INADDR_ANY);
+
+  while (1) {
+    Socket ClientSocket = SocketAccept(MasterSocket);
+    EventWait(server->syncEvent, INFINITE);
+    InitializeSmConnection(&server->connections[server->connectionCount], ClientSocket);
+
+    int fbCount;
+    SocketRecv(ClientSocket, &fbCount, sizeof(int));
+    
+    for (int i = server->fbCount; i < server->fbCount + fbCount; i++) {
+      if (SocketRecv(ClientSocket, &server->fbTypes[i], sizeof(FbType)) != sizeof(FbType))
+        return -1;
+      for (int g = 0; g < server->adaptersCount; g++) {
+        if (server->fbTypes[i] == server->adapters[g].type) {
+          server->adapters[g].Create(&server->fbs[i]);
+
+          SmMemory input, output;
+          InitializeSmMemory(&input, 108, SM_MEMORY_READ_ONLY);
+          InitializeSmMemory(&output, 8, SM_MEMORY_WRITE_ONLY);
+          memset(input->Data, 0, input->Size);
+          memset(output->Data, 0, output->Size);
+
+          AttachSmMemoryToSmConnection(server->connections[server->connectionCount], input);
+          AttachSmMemoryToSmConnection(server->connections[server->connectionCount], output);
+          break;
+        }
+      }
+    }
+    printf("Fbs initialized");
+
+    server->fbCount += fbCount;
+    server->connectionCount++;
+    EventSet(server->syncEvent);
+  }
+}
+
 int ProxyServerInitialize(ProxyServer * p_server)
 {
   ProxyServer server = malloc(sizeof(ProxyServerEntity));
-  
-  Socket MasterSocket = SocketCreate();
-  SocketBind(MasterSocket, 1337, INADDR_ANY);
-  Socket ClientSocket = SocketAccept(MasterSocket);
-
-  InitializeSmConnection(&server->connection, ClientSocket);
-
-
-  SocketRecv(ClientSocket, &server->fbCount, sizeof(int));
-
-  server->fbTypes = malloc(sizeof(FbType) * server->fbCount);
-  server->fbs = malloc(sizeof(Fb) * server->fbCount);
-
-  for (int i = 0; i < server->fbCount; i++)
-    if (SocketRecv(ClientSocket, &server->fbTypes[i], sizeof(FbType)) != sizeof(FbType))
-      return -1;
-
+  server->connectionCount = 0;
+  server->fbCount = 0;
+  server->syncEvent = EventCreate(0, 1);
+  ThreadHandle hAcceptor = OsalThreadCreate(AcceptFunc, server);
 
   *p_server = server;
   return 0;
@@ -35,40 +69,26 @@ int ProxyServerPrepare(ProxyServer server, FbAdapter * adapterList, int adapterC
   memcpy(server->adapters, adapterList, sizeof(FbAdapter) * adapterCount);
   server->adaptersCount = adapterCount;
 
-  for (int i = 0; i < server->fbCount; i++) {
-    
-    for (int g = 0; g < server->adaptersCount; g++) {
-      if (server->fbTypes[i] == server->adapters[g].type) {
-        server->adapters[g].Create(&server->fbs[i]);
-
-        SmMemory input, output;
-        InitializeSmMemory(&input, 108, SM_MEMORY_READ_ONLY);
-        InitializeSmMemory(&output, 8, SM_MEMORY_WRITE_ONLY);
-        memset(input->Data, 0, input->Size);
-        memset(output->Data, 0, output->Size);
-
-        AttachSmMemoryToSmConnection(server->connection, input);
-        AttachSmMemoryToSmConnection(server->connection, output);
-        break;
-      }
-    }
-
-  }
-
   return 0;
 }
 
 
 int ProxyServerOnBegin(ProxyServer server)
 {
+  EventWait(server->syncEvent, INFINITE);
+  int result;
   int fb_index = 0;
-  for (int i = 0; i < server->connection->MemorySize; i++) {
-    if (server->connection->Memory[i]->Type != SM_MEMORY_READ_ONLY) {
-      memcpy(server->connection->Memory[i]->Data, server->fbs[fb_index].output, server->connection->Memory[i]->Size);
-      fb_index++;
+  for (int connectionID = 0; connectionID < server->connectionCount; connectionID++) {
+    for (int i = 0; i < server->connections[connectionID]->MemorySize; i++) {
+      if (server->connections[connectionID]->Memory[i]->Type != SM_MEMORY_READ_ONLY) {
+        memcpy(server->connections[connectionID]->Memory[i]->Data, server->fbs[fb_index].output, server->connections[connectionID]->Memory[i]->Size);
+        fb_index++;
+      }
     }
+    if ((result = SmConnectionSetData(server->connections[connectionID])) != 0)
+      return result;
   }
-  return SmConnectionSetData(server->connection);
+  return 0;
 }
 
 int ProxyServerOnCompute(ProxyServer server)
@@ -88,21 +108,25 @@ int ProxyServerOnCompute(ProxyServer server)
 
 int ProxyServerOnCommit(ProxyServer server)
 {
-  if (SmConnectionGetData(server->connection) == -1)
-    return -1;
   int fb_index = 0;
-  for (int i = 0; i < server->connection->MemorySize; i++) {
-    if (server->connection->Memory[i]->Type != SM_MEMORY_WRITE_ONLY) {
-      memcpy(server->fbs[fb_index].input, server->connection->Memory[i]->Data, server->connection->Memory[i]->Size);
-      fb_index++;
+  for (int connectionID = 0; connectionID < server->connectionCount; connectionID++) {
+    if (SmConnectionGetData(server->connections[connectionID]) == -1)
+      return -1;
+    for (int i = 0; i < server->connections[connectionID]->MemorySize; i++) {
+      if (server->connections[connectionID]->Memory[i]->Type != SM_MEMORY_WRITE_ONLY) {
+        memcpy(server->fbs[fb_index].input, server->connections[connectionID]->Memory[i]->Data, server->connections[connectionID]->Memory[i]->Size);
+        fb_index++;
+      }
     }
   }
+  EventSet(server->syncEvent);
   return 0;
 }
 
 void ProxyServerFinalize(ProxyServer server)
 {
-  ReleaseSmConnection(server->connection);/*
-  ReleaseSmMemory(server->input);
+  for(int connectionID = 0; connectionID < server->connectionCount; connectionID++)
+    ReleaseSmConnection(server->connections[connectionID]);
+  /*ReleaseSmMemory(server->input);
   ReleaseSmMemory(server->output);*/
 }

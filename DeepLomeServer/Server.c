@@ -12,6 +12,8 @@ int main()
   FbAdapter adapters[] = {FbHelloWorldAdapterCreate()};
   ProxyServerPrepare(server, adapters, sizeof(adapters) / sizeof(adapters[0]));
 
+  ProxyServerWaitForSubscribers(server);
+
   while (1)
   {
     if(ProxyServerOnBegin(server) == -1)

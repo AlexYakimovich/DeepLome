@@ -1,4 +1,4 @@
-#include "sm_connection.h"
+#include "../sm_connection.h"
 #include <stdlib.h>
 
 int InitializeSmConnection(SmConnection * connection, Socket sock)

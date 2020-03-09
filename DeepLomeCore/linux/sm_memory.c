@@ -1,4 +1,4 @@
-#include "sm_memory.h"
+#include "../sm_memory.h"
 #include <stdlib.h>
 
 int InitializeSmMemory(SmMemory * memory, unsigned int size, SmMemoryType type)

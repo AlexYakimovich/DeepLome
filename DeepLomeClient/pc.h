@@ -1,6 +1,6 @@
-#include "socket.h"
-#include "sm_connection.h"
-#include "fb_types.h"
+#include "../DeepLomeCore/socket.h"
+#include "../DeepLomeCore/sm_connection.h"
+#include "../DeepLomeCore/fb_types.h"
 #pragma once
 #define MAX_INITIALIZED_FB 100
 

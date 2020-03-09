@@ -1,5 +1,6 @@
 #include "pc.h"
-#include <Windows.h>
+//#include <Windows.h>
+#include <unistd.h>
 #include <stdio.h>
 #include "client_fb_hello_world.h"
 #pragma warning(disable:4996)
@@ -29,7 +30,7 @@ int main()
       break;
     }
     
-    Sleep(1000 + rand() % 50);
+    sleep(1);
 
     cycle++;
     if (cycle % 10 == 0) {

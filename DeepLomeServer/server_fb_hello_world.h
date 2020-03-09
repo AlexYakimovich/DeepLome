@@ -1,6 +1,6 @@
 #include <stdlib.h>
-#include "fb_adapter.h"
-#include "fb_hello_world.h"
+#include "../DeepLomeCore/fb_adapter.h"
+#include "../DeepLomeCore/fb_hello_world.h"
 #include <string.h>
 #pragma once
 
